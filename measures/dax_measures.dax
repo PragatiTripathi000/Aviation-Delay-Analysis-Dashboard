@@ -1,0 +1,78 @@
+// ==========================================
+// OPERATIONAL VOLUME & RATES
+// ==========================================
+
+Total Arrival Flights = SUM('Aviation_Fact'[Total Flights])
+
+Delayed Flights = SUM('Aviation_Fact'[Delayed Flights])
+
+Cancelled Flights = SUM('Aviation_Fact'[Cancelled Flights])
+
+Avg Delay Rate = DIVIDE([Delayed Flights], [Total Arrival Flights], 0)
+
+Cancellation Rate = DIVIDE([Cancelled Flights], [Total Arrival Flights], 0)
+
+
+// ==========================================
+// DELAY DURATION (MINUTES) & SEVERITY
+// ==========================================
+
+Total Delay Minutes = SUM('Aviation_Fact'[Total Delay Minutes])
+
+Carrier Delay Minutes = SUM('Aviation_Fact'[Carrier Delay (Mins)])
+
+Weather Delay Minutes = SUM('Aviation_Fact'[Weather Delay (Mins)])
+
+NAS Delay Minutes = SUM('Aviation_Fact'[nas_delay])
+
+Security Delay Minutes = SUM('Aviation_Fact'[security_delay])
+
+Late Aircraft Delay Minutes = SUM('Aviation_Fact'[late_aircraft_delay])
+
+Average Weather Delay = AVERAGE('Aviation_Fact'[Weather Delay (Mins)])
+
+
+// ==========================================
+// TOTAL CAUSES SUM & PROPORTIONAL SHARES
+// ==========================================
+
+Total Delay Causes Minutes = 
+    [Carrier Delay Minutes] + [Weather Delay Minutes] + 
+    [NAS Delay Minutes] + [Security Delay Minutes] + 
+    [Late Aircraft Delay Minutes]
+
+Market Share % = 
+    DIVIDE(
+        [Total Arrival Flights], 
+        CALCULATE([Total Arrival Flights], ALL('Dim_Airline'[Airline])), 
+        0
+    )
+
+Weather Share % = DIVIDE([Weather Delay Minutes], [Total Delay Causes Minutes], 0)
+
+Carrier Share % = DIVIDE([Carrier Delay Minutes], [Total Delay Causes Minutes], 0)
+
+NAS Share % = DIVIDE([NAS Delay Minutes], [Total Delay Causes Minutes], 0)
+
+Late Aircraft Share % = DIVIDE([Late Aircraft Delay Minutes], [Total Delay Causes Minutes], 0)
+
+
+// ==========================================
+// CALCULATED COLUMNS (ROW-LEVEL LOGIC)
+// ==========================================
+
+Flight Date = DATE('Aviation_Fact'[year], 'Aviation_Fact'[month], 1)
+
+Delay Severity Flag = 
+    IF(
+        'Aviation_Fact'[Weather Delay (Mins)] < 100, "Low", 
+        IF('Aviation_Fact'[Weather Delay (Mins)] < 300, "Medium", "High")
+    )
+
+Month Name = FORMAT('Aviation_Fact'[Flight Date], "MMMM")
+
+Month Year = FORMAT('Aviation_Fact'[Flight Date], "MMM YYYY")
+
+Month Sort = YEAR('Aviation_Fact'[Flight Date]) * 100 + MONTH('Aviation_Fact'[Flight Date])
+
+City_USA = 'Aviation_Fact'[City] & ", USA"
